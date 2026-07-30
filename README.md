@@ -1,140 +1,132 @@
-# 🚦 Smart Traffic Light — Adaptive Signal Control via Vehicle Detection
+# Smart Traffic Light — Adaptive Signal Control via Vehicle Detection
 
-**Capstone Project — AI/ML Fundamentals Course (Individual Project Track)**
-**Student:** [ВПИШИ ПОЛНОЕ ИМЯ]
+Capstone Project — AI/ML Fundamentals Course (Individual Project Track)
+Student: [ВПИШИ ПОЛНОЕ ИМЯ]
 
-## Problem Statement
+## The problem
 
-Fixed-timing traffic lights keep a constant green-light duration regardless of actual road congestion, causing unnecessary queues during peak hours and wasted green time during low traffic. This project builds a prototype that detects vehicles at an intersection, estimates queue size and waiting time, and adaptively adjusts green-light duration — acting like a traffic officer directing congestion.
+Regular traffic lights just run on a timer. Green stays on for a fixed number of seconds no matter how many cars are actually waiting. That means long queues during rush hour and wasted green time when the road is empty. This project is a prototype that watches a traffic camera, figures out how many cars are stuck at the light and for how long, and adjusts the green light time accordingly — basically doing what a traffic officer does by hand.
 
-## Project Track
+## Project track
 
-Individual Project Track (Track 1) — original idea, approved via Project Brief.
+Individual Project Track (Track 1).
 
-## Dataset Source
+## Dataset
 
-- Training/validation/test data: [Roboflow Universe dataset name + link — ВСТАВЬ]
-- Format: YOLOv8 (images + bounding box annotations)
-- Demo video: [YouTube URL used for the end-to-end demo — ВСТАВЬ]
-- License/usage conditions: [ВСТАВЬ]
+- Data: Traffic Intersection Vehicle Detection, from Roboflow Universe — https://universe.roboflow.com/vai/traffic-intersection-vehicle-detection
+- 4,526 images, classes: car, truck, bus, motorbike, person
+- License: CC BY 4.0
+- Format: YOLOv8 (images + bounding boxes)
+- Demo video (used only for the live demo, not for training): [ВСТАВЬ ссылку на YouTube-видео]
 
-## Data Audit & Leakage Check
+## Data audit and leakage check
 
-- **EDA:** class balance, dataset size per split — see notebook Step 2 (`eda_class_balance.png`)
-- **Leakage check:** exact-duplicate image hashes checked across train/valid/test splits — see notebook Step 2b (`duplicate_and_group_check.csv`, auto-generated on run)
-- **Key risk identified:** CV datasets built from video frames can leak the same scene across splits, inflating test metrics. Result: [ВСТАВЬ после запуска — найдены ли дубликаты, как это повлияло на интерпретацию метрик]
-- **Split strategy:** used Roboflow's pre-made train/valid/test split; final metrics reported only once on the test split (Step 7); demo video is a fully independent, never-seen source used for qualitative validation
-- **Known limitation:** no source-video group metadata available from the Roboflow export, so exact per-video grouping could not be verified beyond exact-duplicate hashing
+Before training, I checked whether the dataset could leak information between splits. This matters especially for traffic camera data, since images are often extracted from video, and near-identical frames could end up in both train and test — that would make the model's test score look better than it really is.
 
-## ML Task Type
+- Class balance and dataset size: notebook Step 2 (see `eda_class_balance.png`)
+- Exact-duplicate check across train/valid/test: notebook Step 2b (`duplicate_and_group_check.csv`)
+- Result: [ВСТАВЬ после запуска — были найдены дубликаты или нет, и как это повлияло на метрики]
+- Split used: Roboflow's pre-made train/valid/test split. Final metrics are reported once on the test split (Step 7) and never used to pick the model beforehand. The demo video is a completely separate source the model never saw during training.
+- Limitation: Roboflow doesn't expose which video each image came from, so I could only check for exact duplicates, not full video-level grouping.
 
-Object Detection (vehicle localization + classification) combined with Multi-Object Tracking (ByteTrack) for temporal analysis (waiting time estimation).
+## What kind of ML task this is
 
-## Project Pipeline / System Architecture
+Object detection — the model finds vehicles in an image and draws a box around each one, with a class label (car/truck/bus/motorbike). On top of that, a tracker (ByteTrack) follows each vehicle across frames so I can tell how long it's been sitting still.
 
-```
-Video frame
-   ↓
-YOLOv8 (fine-tuned) — vehicle detection
-   ↓
-ByteTrack — multi-object tracking (assigns persistent IDs across frames)
-   ↓
-Queue analysis — count of stationary vehicles, average waiting time
-   ↓
-Rule-based signal logic — decides green-light extension/reduction
-   ↓
-Annotated video output + signal decision
-```
+## How the pipeline works
 
-## Models / Approaches Tested
+1. A video frame comes in
+2. YOLOv8 (fine-tuned) detects the vehicles in it
+3. ByteTrack keeps track of each vehicle across frames (gives it an ID)
+4. The code counts how many vehicles are stopped and for how long
+5. A simple rule decides whether to extend or shorten the green light
+6. Output: annotated video + the signal decision
 
-| Approach | Description |
+## Models compared
+
+| Approach | What it is |
 |---|---|
-| Baseline | Background subtraction (MOG2), classical CV, no ML |
-| YOLOv8 pretrained | Off-the-shelf COCO weights, no fine-tuning |
-| YOLOv8 fine-tuned (final) | Fine-tuned on domain-specific vehicle dataset |
+| Baseline | Background subtraction (MOG2) — classic computer vision, no neural network |
+| YOLOv8 pretrained | The stock COCO-trained model, no fine-tuning |
+| YOLOv8 fine-tuned (final model) | Same architecture, retrained on the traffic dataset above |
 
-Multiple fine-tuning experiments were run varying epochs, image size, and learning rate — see `experiment_log.csv` and the notebook's "Experiment tracking" section.
+I ran three fine-tuning experiments with different epoch counts / image size / learning rate — the full comparison is in `experiment_log.csv` and notebook Step 4.
 
-## Final Model and Justification
+## Which model I picked and why
 
-Final model: YOLOv8n fine-tuned, experiment `exp2_more_epochs` (25 epochs, imgsz=640). Selected based on best mAP@50 vs. training time trade-off among tested experiments — see comparison table in the notebook (Step 4).
+Final model: YOLOv8n fine-tuned, experiment `exp2_more_epochs` (25 epochs, image size 640). I picked it because it had the best mAP@50 for a reasonable training time out of the three experiments — see the comparison table in notebook Step 4.
 
-## Evaluation Metrics and Results
+## Results
 
-Evaluated on a held-out **test split** (unseen data, not used in training or validation):
+Measured on a held-out test split the model never saw during training or tuning:
 
 | Model | mAP@50 | Precision | Recall |
 |---|---|---|---|
 | YOLOv8 pretrained | [ВСТАВЬ] | [ВСТАВЬ] | [ВСТАВЬ] |
 | YOLOv8 fine-tuned (final) | [ВСТАВЬ] | [ВСТАВЬ] | [ВСТАВЬ] |
 
-Full results: `model_comparison.csv`. Error analysis with example failure cases: see notebook Step 8 and `error_analysis_samples.png`.
+Full numbers: `model_comparison.csv`. Examples of where the model gets things wrong: notebook Step 8, `error_analysis_samples.png`.
 
-## Installation Instructions
+## How to run this
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Or simply open `smart_traffic_light.ipynb` in Google Colab — all dependencies are installed in the first cell.
+Or just open `smart_traffic_light.ipynb` in Google Colab — it installs everything it needs in the first cell.
 
-## Training / Fine-tuning Instructions
+## Training the model
 
-1. Open `smart_traffic_light.ipynb` in Google Colab
-2. Enable GPU: Runtime → Change runtime type → GPU
-3. Get a free Roboflow API key (roboflow.com → Settings → API Key) and paste it into Step 1
-4. Run cells sequentially through Step 5 (training + experiment comparison)
+1. Open the notebook in Colab
+2. Turn on GPU: Runtime -> Change runtime type -> GPU
+3. Get a free Roboflow API key (roboflow.com -> Settings -> API Key) and paste it into Step 1
+4. Run the cells in order through Step 5
 
-## Demo and Inference Run Instructions (Colab-first)
+## Running the demo
 
-1. In the notebook, set `YOUTUBE_URL` (Step 6) to any traffic-intersection video
-2. Run Steps 6–12 sequentially
-3. Step 12 loads the model fresh from the saved `artifacts/best_model.pt` file (not from training memory) — this is the reproducible inference demo
-4. Output: `demo_output.mp4` (annotated video) + printed signal decision
+1. Set `YOUTUBE_URL` in Step 6 to any traffic intersection video
+2. Run Steps 6 through 12
+3. Step 12 loads the model fresh from the saved file (`artifacts/best_model.pt`), not from memory — this proves the saved model actually works on its own, not just right after training
+4. Output: `demo_output.mp4` and a printed signal decision
 
-## Example Input and Output
+## Example output
 
-**Input:** short video clip of a traffic intersection (mp4)
-**Output:**
-- Annotated video with bounding boxes, vehicle count, and queue count overlaid
-- Console output: e.g. `Машин в очереди: 6 → Решение: Средняя очередь -> немного продлеваем → Новое время зелёного: 35 сек`
+Input: a short clip of a traffic intersection.
 
-## Known Limitations
+Output: an annotated video with boxes around each vehicle, a live count, and a line like:
+`Машин в очереди: 6 -> Решение: продлить зелёный -> Новое время: 35 сек`
 
-- Queue length is approximated by vehicle count, not physical distance (no camera calibration)
-- Signal control logic is a simple threshold rule, not an optimization algorithm (e.g., reinforcement learning)
-- Trained on a limited dataset and epoch budget — see `experiment_log.csv`
-- Does not account for multiple lanes/directions separately or multi-intersection coordination ("green wave")
-- Prototype only — not validated for real-world deployment
+## Limitations
 
-## Responsible AI Considerations
+- Queue length is measured in number of cars, not meters — I didn't calibrate the camera for real-world distance
+- The signal decision is a simple threshold rule, not an optimization algorithm
+- Trained on a limited number of epochs given the project timeline — see `experiment_log.csv`
+- Doesn't handle multiple lanes separately, or coordination between nearby intersections
+- This is a prototype for a course project, not something ready for real deployment
 
-- **Bias:** dataset may over-represent certain conditions (daytime, specific road types) and vehicle classes (cars over buses/trucks) — see EDA in notebook Step 2
-- **Privacy:** traffic camera footage may capture license plates and faces; real deployment requires anonymization (blurring) before storage/processing
-- **Safety:** detection errors could lead to suboptimal or unsafe signal timing; not suitable for direct control of real infrastructure without further testing and fail-safe mechanisms
+## Responsible AI notes
 
-## Repository Structure
+- Bias: the dataset may skew toward certain conditions (time of day, road type) and vehicle types — cars likely outnumber buses/trucks by a lot, see the class balance chart
+- Privacy: real traffic footage can show license plates and faces. A real deployment would need to blur these before storing or processing anything
+- Safety: detection mistakes could lead to bad signal timing decisions. This is not meant to control a real traffic light without a lot more testing and safety checks
+
+## Repository structure
 
 ```
 .
 ├── README.md
 ├── PROJECT_STATUS.md
 ├── requirements.txt
-├── smart_traffic_light.ipynb    # main notebook: EDA, leakage check, training, evaluation, demo
+├── smart_traffic_light.ipynb
 ├── artifacts/
-│   └── best_model.pt            # saved fine-tuned model weights (generated on run)
-├── experiment_log.csv           # experiment tracking table (generated on run)
-├── model_comparison.csv         # baseline vs pretrained vs fine-tuned comparison (generated on run)
-├── duplicate_and_group_check.csv # leakage/duplicate check across splits (generated on run)
+│   └── best_model.pt
+├── experiment_log.csv
+├── model_comparison.csv
+├── duplicate_and_group_check.csv
 ├── eda_class_balance.png
 ├── training_curves.png
 ├── error_analysis_samples.png
 ├── traffic_over_time.png
 └── slides/
-    └── presentation.pdf         # defense slides
+    └── presentation.pdf
 ```
-
-## Dataset License / Acknowledgements
-
-[ВСТАВЬ: license of the Roboflow dataset used, and attribution if required]
