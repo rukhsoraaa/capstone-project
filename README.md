@@ -1,7 +1,7 @@
 # Smart Traffic Light — Adaptive Signal Control via Vehicle Detection
 
 Capstone Project — AI/ML Fundamentals Course (Individual Project Track)
-Student: [ВПИШИ ПОЛНОЕ ИМЯ]
+Student: Ruxsora Ahmedova
 
 ## The problem
 
@@ -17,7 +17,7 @@ Individual Project Track (Track 1).
 - 4,526 images, classes: car, truck, bus, motorbike, person
 - License: CC BY 4.0
 - Format: YOLOv8 (images + bounding boxes)
-- Demo video (used only for the live demo, not for training): [ВСТАВЬ ссылку на YouTube-видео]
+- Demo video (used only for the live demo, not for training): [paste the YouTube URL you used]
 
 ## Data audit and leakage check
 
@@ -25,7 +25,7 @@ Before training, I checked whether the dataset could leak information between sp
 
 - Class balance and dataset size: notebook Step 2 (see `eda_class_balance.png`)
 - Exact-duplicate check across train/valid/test: notebook Step 2b (`duplicate_and_group_check.csv`)
-- Result: [ВСТАВЬ после запуска — были найдены дубликаты или нет, и как это повлияло на метрики]
+- Result: [fill in after running Step 2b - whether duplicates were found and how it affects the metrics]
 - Split used: Roboflow's pre-made train/valid/test split. Final metrics are reported once on the test split (Step 7) and never used to pick the model beforehand. The demo video is a completely separate source the model never saw during training.
 - Limitation: Roboflow doesn't expose which video each image came from, so I could only check for exact duplicates, not full video-level grouping.
 
@@ -54,18 +54,22 @@ I ran three fine-tuning experiments with different epoch counts / image size / l
 
 ## Which model I picked and why
 
-Final model: YOLOv8n fine-tuned, experiment `exp2_more_epochs` (25 epochs, image size 640). I picked it because it had the best mAP@50 for a reasonable training time out of the three experiments — see the comparison table in notebook Step 4.
+Final model: YOLOv8n fine-tuned — experiment `[fill in the experiment name you chose]`. I picked it by comparing validation mAP@50 against training time across the three experiments; the full table is in `experiment_log.csv` and notebook Step 4.
 
 ## Results
 
-Measured on a held-out test split the model never saw during training or tuning:
+Measured on a held-out split the model never saw during training or model selection:
 
 | Model | mAP@50 | Precision | Recall |
 |---|---|---|---|
-| YOLOv8 pretrained | [ВСТАВЬ] | [ВСТАВЬ] | [ВСТАВЬ] |
-| YOLOv8 fine-tuned (final) | [ВСТАВЬ] | [ВСТАВЬ] | [ВСТАВЬ] |
+| YOLOv8 pretrained (COCO class IDs, not aligned) | [fill in] | [fill in] | [fill in] |
+| YOLOv8 fine-tuned (final) | [fill in] | [fill in] | [fill in] |
 
-Full numbers: `model_comparison.csv`. Examples of where the model gets things wrong: notebook Step 8, `error_analysis_samples.png`.
+An important caveat about the first row: the pretrained model uses COCO's class numbering, where a car is class 2, while this dataset numbers its classes differently. When the pretrained model is scored against these labels the IDs do not line up, so its mAP is close to zero. That number reflects the label mismatch, not how well the pretrained model actually sees vehicles. It is reported for transparency, but the meaningful comparison for this project is against the background-subtraction baseline.
+
+Baseline comparison (notebook Step 7b): background subtraction detects moving regions rather than vehicles. It cannot classify what it finds, cannot follow an individual vehicle between frames, and — most importantly for this task — vehicles that stop for a long time are absorbed into the background model and disappear. Since the project depends on counting stationary vehicles, that is the failure case that matters most.
+
+Full numbers: `model_comparison.csv`. Failure cases: notebook Step 8, `error_analysis_samples.png`.
 
 ## How to run this
 
@@ -94,13 +98,18 @@ Or just open `smart_traffic_light.ipynb` in Google Colab — it installs everyth
 Input: a short clip of a traffic intersection.
 
 Output: an annotated video with boxes around each vehicle, a live count, and a line like:
-`Машин в очереди: 6 -> Решение: продлить зелёный -> Новое время: 35 сек`
+```
+Vehicles waiting: 6
+Decision: Moderate queue - extend green slightly
+Recommended green duration: 35 seconds
+```
 
 ## Limitations
 
 - Queue length is measured in number of cars, not meters — I didn't calibrate the camera for real-world distance
 - The signal decision is a simple threshold rule, not an optimization algorithm
-- Trained on a limited number of epochs given the project timeline — see `experiment_log.csv`
+- Trained on a limited epoch budget because of the project timeline and free-tier GPU limits — see `experiment_log.csv`
+- Waiting time is detected using fixed pixel and time thresholds (5 px of movement, 2 seconds), which are tuned to this camera's resolution and angle and would need re-tuning elsewhere
 - Doesn't handle multiple lanes separately, or coordination between nearby intersections
 - This is a prototype for a course project, not something ready for real deployment
 
@@ -127,6 +136,7 @@ Output: an annotated video with boxes around each vehicle, a live count, and a l
 ├── training_curves.png
 ├── error_analysis_samples.png
 ├── traffic_over_time.png
+├── demo_frames.png
 └── slides/
     └── presentation.pdf
 ```
