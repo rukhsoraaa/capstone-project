@@ -54,7 +54,7 @@ I ran three fine-tuning experiments with different epoch counts / image size / l
 
 ## Which model I picked and why
 
-Final model: YOLOv8n fine-tuned — experiment `[fill in the experiment name you chose]`. I picked it by comparing validation mAP@50 against training time across the three experiments; the full table is in `experiment_log.csv` and notebook Step 4.
+Final model: YOLOv8n fine-tuned — experiment `[exp2_longer]`. I picked it by comparing validation mAP@50 against training time across the three experiments; the full table is in `experiment_log.csv` and notebook Step 4.
 
 ## Results
 
