@@ -62,8 +62,8 @@ Measured on a held-out split the model never saw during training or model select
 
 | Model | mAP@50 | Precision | Recall |
 |---|---|---|---|
-| YOLOv8 pretrained (COCO class IDs, not aligned) | [fill in] | [fill in] | [fill in] |
-| YOLOv8 fine-tuned (final) | [fill in] | [fill in] | [fill in] |
+| YOLOv8 pretrained (COCO class IDs, not aligned) | [0.0055] | [0.0243] | [0.2818] |
+| YOLOv8 fine-tuned (final) | [0.8820] | [0.8826] | [0.8232] |
 
 An important caveat about the first row: the pretrained model uses COCO's class numbering, where a car is class 2, while this dataset numbers its classes differently. When the pretrained model is scored against these labels the IDs do not line up, so its mAP is close to zero. That number reflects the label mismatch, not how well the pretrained model actually sees vehicles. It is reported for transparency, but the meaningful comparison for this project is against the background-subtraction baseline.
 

@@ -1,0 +1,4 @@
+experiment,epochs,imgsz,lr0,batch,val_mAP50,val_mAP50_95,val_precision,val_recall,train_time_min
+exp1_short,5,416,0.01,16,0.636,0.4279,0.7243,0.6359,3.1
+exp2_longer,15,640,0.01,16,0.8598,0.6041,0.8592,0.8185,10.8
+exp3_lower_lr,15,640,0.001,16,0.8598,0.6041,0.8592,0.8185,11.0
