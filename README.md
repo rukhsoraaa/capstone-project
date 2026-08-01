@@ -17,7 +17,7 @@ Individual Project Track (Track 1).
 - 4,526 images, classes: car, truck, bus, motorbike, person
 - License: CC BY 4.0
 - Format: YOLOv8 (images + bounding boxes)
-- Demo video (used only for the live demo, not for training): [paste the YouTube URL you used]
+- Demo video (used only for the live demo, not for training): [https://youtu.be/mKbIkpHofOM?si=2lsUCEoLalhNUDcI]
 
 ## Data audit and leakage check
 
