@@ -25,7 +25,7 @@ Before training, I checked whether the dataset could leak information between sp
 
 - Class balance and dataset size: notebook Step 2 (see `eda_class_balance.png`)
 - Exact-duplicate check across train/valid/test: notebook Step 2b (`duplicate_and_group_check.csv`)
-- Result: [fill in after running Step 2b - whether duplicates were found and how it affects the metrics]
+- Result: [No exact duplicates found across all split pairs. The leakage check passed.]
 - Split used: Roboflow's pre-made train/valid/test split. Final metrics are reported once on the test split (Step 7) and never used to pick the model beforehand. The demo video is a completely separate source the model never saw during training.
 - Limitation: Roboflow doesn't expose which video each image came from, so I could only check for exact duplicates, not full video-level grouping.
 
